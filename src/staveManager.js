@@ -5,12 +5,17 @@ import Vex from 'vexflow';
 
 
 const VF = Vex.Flow;
+const DURATIONS = ['32', '16', '8', 'q', 'h', 'w'];
+const NEXT_DURATIONS = new Map(
+	DURATIONS.map( (dur, i) => [dur, DURATIONS[(i+1) % DURATIONS.length]])
+); // Map each note duration to the next biggest duration
 
 // Stave state
-//
+
 var _cursor_note = null; // Vex.Flow.StaveNote; cursor note that users can drop onto the stave
 var _context = null; // Vex.Flow.Context
 var _stave = null; // Vex.Flow.Stave
+var _committedNotes = []; // []Vex.Flow.StaveNote Notes that have been saved to the stave
 
 // Public
 
@@ -43,6 +48,28 @@ export function getStave() {
 	return _stave;
 }
 
+export function commitCursorNote(note) {
+	const cursorNote = getCursorNote();
+	_committedNotes.push(copyNote(cursorNote));
+}
+
+function copyNote(note) {
+	return new Vex.Flow.StaveNote(
+		{keys: note.keys, duration: note.duration}
+	)
+	.setContext(getContext())
+	.setStave(getStave())
+	.setTickContext(
+		new Vex.Flow.TickContext()
+	);
+}
+
+function drawCommittedNotes() {
+	_committedNotes.forEach(note => {
+		note.draw();
+	})
+}
+
 function setStave(stave) {
 	_stave = stave;
 }
@@ -63,19 +90,24 @@ export function initializeStave(id) {
 
 function setNewStave() {
 	const stave = new VF.Stave(10, 40, 400);
+	stave.addClef('treble');
 	setStave(stave);
 
 	return stave;
 }
 
 export function drawCursorNote(xpos, ypos) {
-	const key = getKeyForY(ypos) ? getKeyForY(ypos) : 'g/4';
-	console.log(key);
-	const cursorNote = new Vex.Flow.StaveNote({keys: [key], duration:'q'});
+	const key = getKeyForY(ypos); 
+	const cursorNote = new Vex.Flow.StaveNote({keys: [key], duration: DURATIONS[0]});
 	cursorNote.setContext(getContext()).setStave(getStave());
 	cursorNote.setTickContext(new Vex.Flow.TickContext());
-	// modify xpos depending on padding, stave bounding box, etc.
+
+	// Modify xpos depending on padding, stave bounding box, etc.
+	xpos -= getStave().start_x;
+	xpos -= 25; // TODO: Arbitrary value to sync cursorNote with actual cursor. Figure out why there's an offset at all.
 	cursorNote.getTickContext().setX(xpos);
+
+	setCursorNote(cursorNote);
 	cursorNote.draw();
 }
 
@@ -100,9 +132,9 @@ function getKeyForY(ypos) {
 
 	// Determine octave of this key.
 	
-	// Our top staffline 'f' is an 'f5', so we'll call 5 our baseOctave.
+	// Our top staffline 'f' is an 'f/5', so we'll call 5 our baseOctave.
 	const baseOctave = 5; 
-	const baseNote = 3; // We roll over to the next octave every time we pass a 'c', which is the index-3 note in our keySet
+	const baseNote = 3; // We roll over to the next octave every time we pass a 'c', which is the index-3 note in our keySet.
 	const octave = baseOctave - Math.floor((noteNum + baseNote)/keySet.length);
 	return key + "/" + octave;
 }
@@ -116,5 +148,5 @@ export function redrawStave() {
 	getContext().clear()
 	setNewStave();
 	drawBaseStave();
-	// TODO: Once I maintain selected notes, redraw them here
+	drawCommittedNotes();
 }
