@@ -80,23 +80,30 @@ export function drawCursorNote(xpos, ypos) {
 }
 
 function getKeyForY(ypos) {
-	let mapping = "fedcbag";
-	const line = getStave().getLineForY(ypos);
-	let noteNum = Math.round((line)*2) - 1;
-	const idx = noteNum % mapping.length;
+	// Takes a Y page position.
+	// Returns a key specification like 'g/5' or 'd/3'--a pitch and octave.
+	const keySet = "fedcbag"; // Order of keys starting from top staffline and descending the staff.
 
-	if (noteNum < 0) {
-		mapping = mapping.substring(1, mapping.length) + mapping.substring(0, 1);
-		mapping = [...mapping].reverse().join('');
-		console.log(mapping)
+	const staffline = getStave().getLineForY(ypos);
+
+	// Stafflines correspond to every other note in the keySet.
+	// We multiply by 2 to get an index into the keySet to account for that alternation.
+	const noteNum = Math.round((staffline)*2) - 1; 
+
+	// Lines can go negative, in which case we can just reverse our index. 
+	let idx = noteNum % keySet.length;
+	if (idx < 0) {
+		idx = keySet.length + idx;
 	}
-	const key =  mapping[Math.abs(idx)];
 
-	const baseOctave = 5; // Octaves decrease as `line` increases
-	const baseNote = 3;
-	const octave = baseOctave - Math.floor((noteNum + baseNote)/mapping.length);
-	console.log(line);
-	console.log(idx);
+	const key =  keySet[idx];
+
+	// Determine octave of this key.
+	
+	// Our top staffline 'f' is an 'f5', so we'll call 5 our baseOctave.
+	const baseOctave = 5; 
+	const baseNote = 3; // We roll over to the next octave every time we pass a 'c', which is the index-3 note in our keySet
+	const octave = baseOctave - Math.floor((noteNum + baseNote)/keySet.length);
 	return key + "/" + octave;
 }
 
