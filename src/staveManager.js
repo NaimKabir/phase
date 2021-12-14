@@ -76,26 +76,27 @@ export function drawCursorNote(xpos, ypos) {
 	cursorNote.setTickContext(new Vex.Flow.TickContext());
 	// modify xpos depending on padding, stave bounding box, etc.
 	cursorNote.getTickContext().setX(xpos);
-	console.log(ypos);
-	console.log(getStave().getLineForY(ypos));
-	console.log(getKeyForY(ypos));
 	cursorNote.draw();
 }
 
 function getKeyForY(ypos) {
-	const mappings = ["fdbgecaf", "ecafdbg"];
-	const tol = 0.4;
+	let mapping = "fedcbag";
 	const line = getStave().getLineForY(ypos);
-	const fractionalPart = line - Math.floor(line);
-	const withinMiddle = fractionalPart >= 0.5 - tol && fractionalPart < 0.5 + tol;
-	let mapping =  withinMiddle ? mappings[1] : mappings[0];
-	const lineToInteger = withinMiddle ? Math.floor : Math.round;
-	const idx = (lineToInteger(line) - 1) % mapping.length;
-	mapping = idx < 0 ? [...mapping].reverse().join('') : mapping; // The mappings will reverse direction
+	let noteNum = Math.round((line)*2) - 1;
+	const idx = noteNum % mapping.length;
+
+	if (noteNum < 0) {
+		mapping = mapping.substring(1, mapping.length) + mapping.substring(0, 1);
+		mapping = [...mapping].reverse().join('');
+		console.log(mapping)
+	}
 	const key =  mapping[Math.abs(idx)];
 
 	const baseOctave = 5; // Octaves decrease as `line` increases
-	const octave = baseOctave - Math.floor((lineToInteger(line) / 3))
+	const baseNote = 3;
+	const octave = baseOctave - Math.floor((noteNum + baseNote)/mapping.length);
+	console.log(line);
+	console.log(idx);
 	return key + "/" + octave;
 }
 
