@@ -48,9 +48,10 @@ export function getStave() {
 	return _stave;
 }
 
-export function commitCursorNote(note) {
-	const cursorNote = getCursorNote();
-	_committedNotes.push(copyNote(cursorNote));
+export function commitCursorNote(xpos) {
+	const note = copyNote(getCursorNote());
+	note.getTickContext().setX(getAdjustedXPos(xpos));
+	_committedNotes.push(note);
 }
 
 function copyNote(note) {
@@ -96,16 +97,18 @@ function setNewStave() {
 	return stave;
 }
 
+function getAdjustedXPos(xpos) {
+	const adj = 25; // TODO: Arbitrary value to sync cursorNote with actual cursor. Figure out why there's an offset at all.
+	return xpos - getStave().start_x - adj; 
+}
+
 export function drawCursorNote(xpos, ypos) {
 	const key = getKeyForY(ypos); 
 	const cursorNote = new Vex.Flow.StaveNote({keys: [key], duration: DURATIONS[0]});
 	cursorNote.setContext(getContext()).setStave(getStave());
 	cursorNote.setTickContext(new Vex.Flow.TickContext());
 
-	// Modify xpos depending on padding, stave bounding box, etc.
-	xpos -= getStave().start_x;
-	xpos -= 25; // TODO: Arbitrary value to sync cursorNote with actual cursor. Figure out why there's an offset at all.
-	cursorNote.getTickContext().setX(xpos);
+	cursorNote.getTickContext().setX(getAdjustedXPos(xpos));
 
 	setCursorNote(cursorNote);
 	cursorNote.draw();
@@ -122,8 +125,9 @@ function getKeyForY(ypos) {
 	// We multiply by 2 to get an index into the keySet to account for that alternation.
 	const noteNum = Math.round((staffline)*2) - 1; 
 
-	// Lines can go negative, in which case we can just reverse our index. 
 	let idx = noteNum % keySet.length;
+	
+	// Lines can go negative, in which case we can just reverse our index. 
 	if (idx < 0) {
 		idx = keySet.length + idx;
 	}

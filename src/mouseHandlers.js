@@ -2,7 +2,8 @@ import Vex from 'vexflow';
 import { drawCursorNote, redrawStave, commitCursorNote } from './staveManager.js';
 
 export function handleClick(e) {
-	commitCursorNote();
+	// Flush a cursor note to the stave if not hovering above a flushed note.
+	commitCursorNote(e.pageX);
 	redrawStave();
 	drawCursorNoteAtMouse(e);
 }
