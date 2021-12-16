@@ -12,6 +12,7 @@ const NEXT_DURATIONS = new Map(
 
 // Stave state
 
+var _element = null; // Element we draw the stave to
 var _cursor_note = null; // Vex.Flow.StaveNote; cursor note that users can drop onto the stave
 var _context = null; // Vex.Flow.Context
 var _stave = null; // Vex.Flow.Stave
@@ -24,6 +25,17 @@ export function getCursorNote() {
 		console.error("cursor note not initialized.")
 	}
 	return _cursor_note;
+}
+
+function setElement(element) {
+	_element = element;
+}
+
+function getElement(element) {
+	if (!_element) {
+		console.error("element not initialized.")
+	}
+	return _element;
 }
 
 function setCursorNote(staveNote) {
@@ -77,6 +89,7 @@ function setStave(stave) {
 
 export function initializeStave(id) {
 	const div = document.getElementById(id);
+	setElement(div);
 	const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
 	
 	// Configure the rendering context.
@@ -98,12 +111,21 @@ function setNewStave() {
 }
 
 function getAdjustedXPos(xpos) {
-	const adj = 25; // TODO: Arbitrary value to sync cursorNote with actual cursor. Figure out why there's an offset at all.
-	return xpos - getStave().start_x - adj; 
+	const bodyRect = document.body.getBoundingClientRect();
+    	const elemRect = getElement().getBoundingClientRect();
+	const xOffset = elemRect.left - bodyRect.left;
+	return xpos - xOffset;
+}
+
+function getAdjustedYPos(ypos) {
+	const bodyRect = document.body.getBoundingClientRect();
+    	const elemRect = getElement().getBoundingClientRect();
+	const yOffset = elemRect.top - bodyRect.top;
+	return ypos - yOffset;
 }
 
 export function drawCursorNote(xpos, ypos) {
-	const key = getKeyForY(ypos); 
+	const key = getKeyForY(getAdjustedYPos(ypos)); 
 	const cursorNote = new Vex.Flow.StaveNote({keys: [key], duration: DURATIONS[0]});
 	cursorNote.setContext(getContext()).setStave(getStave());
 	cursorNote.setTickContext(new Vex.Flow.TickContext());
