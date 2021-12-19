@@ -27,11 +27,11 @@ export function getCursorNote() {
 	return _cursor_note;
 }
 
-function setElement(element) {
+function setStaveElement(element) {
 	_element = element;
 }
 
-function getElement(element) {
+export function getStaveElement(element) {
 	if (!_element) {
 		console.error("element not initialized.")
 	}
@@ -62,7 +62,7 @@ export function getStave() {
 
 export function commitCursorNote(xpos) {
 	const note = copyNote(getCursorNote());
-	note.getTickContext().setX(getAdjustedXPos(xpos));
+	note.getTickContext().setX(xpos);
 	_committedNotes.push(note);
 }
 
@@ -89,7 +89,7 @@ function setStave(stave) {
 
 export function initializeStave(id) {
 	const div = document.getElementById(id);
-	setElement(div);
+	setStaveElement(div);
 	const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
 	
 	// Configure the rendering context.
@@ -110,27 +110,14 @@ function setNewStave() {
 	return stave;
 }
 
-function getAdjustedXPos(xpos) {
-	const bodyRect = document.body.getBoundingClientRect();
-    	const elemRect = getElement().getBoundingClientRect();
-	const xOffset = elemRect.left - bodyRect.left;
-	return xpos - xOffset;
-}
-
-function getAdjustedYPos(ypos) {
-	const bodyRect = document.body.getBoundingClientRect();
-    	const elemRect = getElement().getBoundingClientRect();
-	const yOffset = elemRect.top - bodyRect.top;
-	return ypos - yOffset;
-}
 
 export function drawCursorNote(xpos, ypos) {
-	const key = getKeyForY(getAdjustedYPos(ypos)); 
+	const key = getKeyForY(ypos); 
 	const cursorNote = new Vex.Flow.StaveNote({keys: [key], duration: DURATIONS[0]});
 	cursorNote.setContext(getContext()).setStave(getStave());
 	cursorNote.setTickContext(new Vex.Flow.TickContext());
 
-	cursorNote.getTickContext().setX(getAdjustedXPos(xpos));
+	cursorNote.getTickContext().setX(xpos);
 
 	setCursorNote(cursorNote);
 	cursorNote.draw();
