@@ -60,9 +60,8 @@ export function getStave() {
 	return _stave;
 }
 
-export function commitCursorNote(xpos) {
+export function commitCursorNote() {
 	const note = copyNote(getCursorNote());
-	note.getTickContext().setX(xpos);
 	_committedNotes.push(note);
 }
 
@@ -73,7 +72,7 @@ function copyNote(note) {
 	.setContext(getContext())
 	.setStave(getStave())
 	.setTickContext(
-		new Vex.Flow.TickContext()
+		new Vex.Flow.TickContext().setX(note.getTickContext().getX())
 	);
 }
 

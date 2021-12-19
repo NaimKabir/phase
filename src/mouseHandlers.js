@@ -3,15 +3,18 @@ import { getStaveElement, drawCursorNote, redrawStave, commitCursorNote } from '
 
 export function handleClick(e) {
 	// Flush a cursor note to the stave if not hovering above a flushed note.
-	const pos = getXandY(e);
-	commitCursorNote(pos.x);
+	commitCursorNote();
 	redrawStave();
-	drawCursorNote(pos.x, pos.y);
+	drawCursorNoteAtMouse(e);
 }
 
 export function handleMouseOver(e) {
 	// Render a cursorNote ready to be placed somewhere on the stave.
 	redrawStave();
+	drawCursorNoteAtMouse(e);
+}
+
+function drawCursorNoteAtMouse(e) {
 	const pos = getXandY(e);
 	drawCursorNote(pos.x, pos.y);
 }
